@@ -617,7 +617,7 @@
 				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$SRCROOT/../SharedCode/build/xcode-framework\"",
+					"$SRCROOT/../SharedCode/build/xcode-framework",
 				);
 				INFOPLIST_FILE = News/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -641,7 +641,7 @@
 				DEVELOPMENT_TEAM = "";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
-					"\"$SRCROOT/../SharedCode/build/xcode-framework\"",
+					"$SRCROOT/../SharedCode/build/xcode-framework",
 				);
 				INFOPLIST_FILE = News/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
