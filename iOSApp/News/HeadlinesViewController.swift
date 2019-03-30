@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import NewsLibrary
+import SharedCode
 
 class HeadlinesViewController: UIViewController {
     

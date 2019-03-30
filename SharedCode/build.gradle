@@ -9,7 +9,7 @@ kotlin {
         fromPreset(android, 'android')
         fromPreset(ios, 'ios') {
             binaries {
-                framework('NewsLibrary')
+                framework('SharedCode')
             }
         }
     }
@@ -48,7 +48,7 @@ kotlin {
 task('packForXcode', type: Sync) {
     def outputDir = new File(buildDir, 'xcode-framework')
     def mode = project.findProperty('XCODE_CONFIGURATION')?.toUpperCase() ?: 'DEBUG'
-    def framework = kotlin.targets.ios.binaries.getFramework('NewsLibrary', mode)
+    def framework = kotlin.targets.ios.binaries.getFramework('SharedCode', mode)
 
     dependsOn framework.linkTask
 

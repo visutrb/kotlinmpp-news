@@ -7,7 +7,7 @@
 //
 
 import UIKit
-import NewsLibrary
+import SharedCode
 import Kingfisher
 import DateToolsSwift
 
