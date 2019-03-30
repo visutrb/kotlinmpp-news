@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="16dp">
+
+    <ImageView
+        android:id="@+id/headlineImageView"
+        android:layout_width="100dp"
+        android:layout_height="0dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintDimensionRatio="1:1"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:srcCompat="@tools:sample/backgrounds/scenic" />
+
+    <TextView
+        android:id="@+id/headlineTitleTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toEndOf="@+id/headlineImageView"
+        app:layout_constraintTop_toTopOf="@+id/headlineImageView"
+        tools:text="Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean eget lectus metus. Mauris tristique, velit non pellentesque iaculis, turpis ex lobortis ligula, sit amet commodo mi purus in nulla. Curabitur vel erat in erat rutrum imperdiet. Morbi lacinia justo id nulla vehicula, non vulputate nulla condimentum." />
+
+
+    <TextView
+        android:id="@+id/headlineSourceTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:maxLines="1"
+        android:textColor="@android:color/black"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/headlineImageView"
+        app:layout_constraintEnd_toStartOf="@+id/headlineSourceTimeDivider"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintHorizontal_chainStyle="packed"
+        app:layout_constraintStart_toEndOf="@+id/headlineImageView"
+        tools:text="Lorem Ipsum" />
+
+    <TextView
+        android:id="@+id/headlineSourceTimeDivider"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginLeft="4dp"
+        android:maxLines="1"
+        android:text="@string/headline_sourceTimeDivider"
+        android:textColor="@android:color/black"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/headlineSourceTv"
+        app:layout_constraintEnd_toStartOf="@+id/headlineTimeTv"
+        app:layout_constraintStart_toEndOf="@+id/headlineSourceTv"
+        app:layout_constraintTop_toTopOf="@+id/headlineSourceTv" />
+
+    <TextView
+        android:id="@+id/headlineTimeTv"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="4dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginRight="16dp"
+        android:maxLines="1"
+        android:textColor="@android:color/black"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toBottomOf="@+id/headlineSourceTimeDivider"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/headlineSourceTimeDivider"
+        app:layout_constraintTop_toTopOf="@+id/headlineSourceTimeDivider"
+        tools:text="1 hour ago" />
+</android.support.constraint.ConstraintLayout>

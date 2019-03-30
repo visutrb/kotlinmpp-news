@@ -1,0 +1,20 @@
+PODS:
+  - DateToolsSwift (4.0.0)
+  - Kingfisher (5.3.0)
+
+DEPENDENCIES:
+  - DateToolsSwift (~> 4.0)
+  - Kingfisher (~> 5.0)
+
+SPEC REPOS:
+  https://github.com/cocoapods/specs.git:
+    - DateToolsSwift
+    - Kingfisher
+
+SPEC CHECKSUMS:
+  DateToolsSwift: 875d97ff9e3a5d54abdd67a269b3f51c757b71ab
+  Kingfisher: 4692c783ffb99e9e2e40a6eb3e518c3b96c6fa8c
+
+PODFILE CHECKSUM: fa65a2ec44c7117ef2eeed5796bdd1e061e50945
+
+COCOAPODS: 1.6.0

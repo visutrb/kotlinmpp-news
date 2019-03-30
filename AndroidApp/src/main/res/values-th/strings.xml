@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">News</string>
+    <string name="headline_loadFailure">ไม่สามารถโหลดข้อมูลได้ในขณะนี้</string>
+</resources>

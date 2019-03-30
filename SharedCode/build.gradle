@@ -1,0 +1,57 @@
+apply plugin: 'kotlin-multiplatform'
+apply plugin: 'kotlinx-serialization'
+
+kotlin {
+    targets {
+        def android = presets.jvm
+        def ios = System.getenv('SDK_NAME')?.startsWith('iphoneos') ? presets.iosArm64 : presets.iosX64
+
+        fromPreset(android, 'android')
+        fromPreset(ios, 'ios') {
+            binaries {
+                framework('NewsLibrary')
+            }
+        }
+    }
+
+    sourceSets {
+        commonMain.dependencies {
+            implementation kotlin('stdlib-common')
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-common:$coroutines_version"
+            implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-common:$serialization_version"
+            implementation "io.ktor:ktor-client-core:$ktor_version"
+            implementation "io.ktor:ktor-client-json:$ktor_version"
+        }
+        commonTest.dependencies {
+            implementation kotlin('test-common')
+        }
+        androidMain.dependencies {
+            implementation kotlin('stdlib-jdk7')
+            api "org.jetbrains.kotlinx:kotlinx-coroutines-android:$coroutines_version"
+            api "org.jetbrains.kotlinx:kotlinx-serialization-runtime:$serialization_version"
+            implementation "io.ktor:ktor-client-android:$ktor_version"
+            implementation "io.ktor:ktor-client-json-jvm:$ktor_version"
+        }
+        androidTest.dependencies {
+            implementation kotlin('test-junit')
+        }
+        iosMain.dependencies {
+            implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core-native:$coroutines_version"
+            implementation "org.jetbrains.kotlinx:kotlinx-serialization-runtime-native:$serialization_version"
+            implementation "io.ktor:ktor-client-ios:$ktor_version"
+            implementation "io.ktor:ktor-client-json-native:$ktor_version"
+        }
+        iosTest.dependencies {}
+    }
+}
+
+task('packForXcode', type: Sync) {
+    def outputDir = new File(buildDir, 'xcode-framework')
+    def mode = project.findProperty('XCODE_CONFIGURATION')?.toUpperCase() ?: 'DEBUG'
+    def framework = kotlin.targets.ios.binaries.getFramework('NewsLibrary', mode)
+
+    dependsOn framework.linkTask
+
+    from { framework.outputFile.parentFile }
+    into outputDir
+}

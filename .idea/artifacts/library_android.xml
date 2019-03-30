@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="library-android">
+    <output-path>$PROJECT_DIR$/library/build/libs</output-path>
+    <root id="archive" name="library-android.jar">
+      <element id="module-output" name="library_androidMain" />
+    </root>
+  </artifact>
+</component>
