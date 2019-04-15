@@ -16,22 +16,38 @@ class HeadlinesActivity : AppCompatActivity(), HeadlinesView {
     private val headlinesAdapter by lazy { HeadlinesRvAdapter() }
     private val headlinesPresenter by lazy { PresenterFactory.createHeadlinesPresenter() }
 
+    private val statusBarOffset: Int
+        get() {
+            val scale = resources.displayMetrics.density
+            val statusBarHeight = resources.getDimensionPixelSize(
+                resources.getIdentifier(
+                    "status_bar_height",
+                    "dimen",
+                    "android"
+                )
+            )
+            // 16dp offset
+            return (16 * scale).toInt() + statusBarHeight
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_headlines)
 
-        headlinesRecyclerView.apply {
-            adapter = headlinesAdapter
-            layoutManager = LinearLayoutManager(this@HeadlinesActivity)
-            addItemDecoration(
-                DividerItemDecoration(
-                    this@HeadlinesActivity,
-                    LinearLayoutManager.VERTICAL
-                )
-            )
+        headlinesAdapter.apply {
+            onScrollEnded = { headlinesPresenter.loadHeadlineAsync() }
         }
 
-        headlinesSwipeRefreshLayout.setOnRefreshListener { headlinesPresenter.loadHeadlineAsync() }
+        headlinesRecyclerView.apply {
+            adapter = headlinesAdapter
+            layoutManager = LinearLayoutManager(context)
+            addItemDecoration(DividerItemDecoration(context, LinearLayoutManager.VERTICAL))
+        }
+
+        headlinesSwipeRefreshLayout.apply {
+            setProgressViewOffset(true, 0, statusBarOffset)
+            setOnRefreshListener { headlinesPresenter.loadHeadlineAsync(true) }
+        }
 
         headlinesPresenter.apply {
             view = this@HeadlinesActivity
@@ -40,20 +56,28 @@ class HeadlinesActivity : AppCompatActivity(), HeadlinesView {
     }
 
     override fun onLoad() {
-        headlinesSwipeRefreshLayout.isRefreshing = true
+        if (headlinesPresenter.currentPage == 1) headlinesSwipeRefreshLayout.isRefreshing = true
+        else headlinesAdapter.isLoadingNextPage = true
         Log.d(TAG, "Loading articles.")
     }
 
     override fun onResponse(response: ArticleListResponse) {
+        val articles = response.articles
+        if (headlinesPresenter.currentPage == 1) {
+            articles?.let { headlinesAdapter.replaceAll(it) }
+            headlinesSwipeRefreshLayout.isRefreshing = false
+        } else {
+            articles?.let { headlinesAdapter.addAll(it) }
+            headlinesAdapter.isLoadingNextPage = false
+        }
         Log.d(TAG, "Headlines loaded.")
-        response.articles?.let { headlinesAdapter.articles = it }
-        headlinesSwipeRefreshLayout.isRefreshing = false
     }
 
     override fun onError(e: Exception) {
-        Log.e(TAG, "Failed to load articles.", e)
         Toast.makeText(this, "Failed to load articles", Toast.LENGTH_SHORT).show()
         headlinesSwipeRefreshLayout.isRefreshing = false
+        headlinesAdapter.isLoadingNextPage = false
+        Log.e(TAG, "Failed to load articles.", e)
     }
 
     companion object {

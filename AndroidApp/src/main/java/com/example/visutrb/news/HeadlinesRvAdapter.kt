@@ -1,5 +1,6 @@
 package com.example.visutrb.news
 
+import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
 import android.text.format.DateUtils
 import android.view.LayoutInflater
@@ -9,36 +10,62 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.example.visutrb.news.shared.entity.Article
+import java.lang.ref.WeakReference
 import java.text.SimpleDateFormat
 import java.util.*
 
 class HeadlinesRvAdapter : RecyclerView.Adapter<HeadlinesRvAdapter.HeadlineItemViewHolder>() {
 
-    var articles = listOf<Article>()
+    private lateinit var recyclerViewRef: WeakReference<RecyclerView>
+
+    var onScrollEnded: (() -> Unit)? = null
+
+    var isLoadingNextPage: Boolean = false
         set(value) {
             field = value
-            notifyDataSetChanged()
+            if (value) {
+                notifyItemInserted(itemCount)
+                recyclerViewRef.get()?.smoothScrollToPosition(itemCount - 1)
+            } else {
+                notifyItemRemoved(itemCount)
+            }
         }
 
+    private val articleList = mutableListOf<Article>()
+
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
+        super.onAttachedToRecyclerView(recyclerView)
+        recyclerView.addOnScrollListener(OnScrollEndedListener())
+        recyclerViewRef = WeakReference(recyclerView)
+    }
+
     override fun getItemCount(): Int {
-        return articles.size
+        return if (isLoadingNextPage) articleList.size + 1 else articleList.size
     }
 
     override fun getItemViewType(position: Int): Int {
-        return if (position == 0) VIEW_TYPE_ENLARGED else VIEW_TYPE_NORMAL
+        return when {
+            position == 0 -> VIEW_TYPE_ENLARGED
+            position == itemCount - 1 && isLoadingNextPage -> VIEW_TYPE_PROGRESS
+            else -> VIEW_TYPE_NORMAL
+        }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HeadlineItemViewHolder {
         val inflater = LayoutInflater.from(parent.context)
-        val layoutId =
-            if (viewType == VIEW_TYPE_ENLARGED) R.layout.item_enlarged_headline
-            else R.layout.item_normal_headline
+        val layoutId = when (viewType) {
+            VIEW_TYPE_ENLARGED -> R.layout.item_enlarged_headline
+            VIEW_TYPE_NORMAL -> R.layout.item_normal_headline
+            VIEW_TYPE_PROGRESS -> R.layout.item_progress
+            else -> throw Exception("Invalid view type")
+        }
         val itemView = inflater.inflate(layoutId, parent, false)
         return HeadlineItemViewHolder(itemView)
     }
 
     override fun onBindViewHolder(holder: HeadlineItemViewHolder, position: Int) {
-        val article = articles[position]
+        if (getItemViewType(position) == VIEW_TYPE_PROGRESS) return
+        val article = articleList[position]
         val date: Date = article.publishedAt?.let {
             val dateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
             dateFormat.timeZone = TimeZone.getTimeZone("UTC")
@@ -69,10 +96,42 @@ class HeadlinesRvAdapter : RecyclerView.Adapter<HeadlinesRvAdapter.HeadlineItemV
         }
     }
 
+    fun addAll(articles: List<Article>) {
+        val insertPosition = articleList.size
+        articleList.addAll(articles)
+        notifyItemRangeInserted(insertPosition, articles.size)
+    }
+
+    fun replaceAll(articles: List<Article>) {
+        articleList.apply {
+            clear()
+            addAll(articles)
+        }
+        notifyDataSetChanged()
+    }
+
     class HeadlineItemViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView)
+
+    private inner class OnScrollEndedListener : RecyclerView.OnScrollListener() {
+
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            val lm = recyclerView.layoutManager ?: return
+
+            val lastItemPos = itemCount - 1
+            val lastVisibleItemPos = when (lm) {
+                is LinearLayoutManager -> lm.findLastCompletelyVisibleItemPosition()
+                else -> return
+            }
+
+            if (lastItemPos == lastVisibleItemPos) {
+                onScrollEnded?.invoke()
+            }
+        }
+    }
 
     companion object {
         private const val VIEW_TYPE_ENLARGED = 0
         private const val VIEW_TYPE_NORMAL = 1
+        private const val VIEW_TYPE_PROGRESS = 2
     }
 }
