@@ -60,7 +60,6 @@ class HeadlinesViewController: UIViewController {
     }
     
     @objc private func handleRefresh() {
-        headlinesTableView.contentInsetAdjustmentBehavior = .automatic
         headlinesPresenter.reloadHeadlineAsync()
     }
     
@@ -102,7 +101,10 @@ extension HeadlinesViewController: UITableViewDataSource {
         }
     }
     
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    func tableView(
+        _ tableView: UITableView,
+        cellForRowAt indexPath: IndexPath) -> UITableViewCell
+    {
         let section = indexPath.section
         if section == 0 {
             let row = indexPath.row
@@ -112,11 +114,13 @@ extension HeadlinesViewController: UITableViewDataSource {
             } else {
                 cellID = "Normal Headline"
             }
-            let cell = tableView.dequeueReusableCell(withIdentifier: cellID) as! HeadlinesTableViewCell
+            let cell = tableView.dequeueReusableCell(
+                withIdentifier: cellID) as! HeadlinesTableViewCell
             cell.article = articles[row]
             return cell
         } else {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "Loading Progress") as! ProgressTableViewCell
+            let cell = tableView.dequeueReusableCell(
+                withIdentifier: "Loading Progress") as! ProgressTableViewCell
             cell.progress.startAnimating()
             return cell
         }
