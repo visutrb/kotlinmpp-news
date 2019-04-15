@@ -20,6 +20,8 @@ class HeadlinesRvAdapter : RecyclerView.Adapter<HeadlinesRvAdapter.HeadlineItemV
 
     var onScrollEnded: (() -> Unit)? = null
 
+    var isLoading = false
+
     var isLastPage: Boolean = false
         set(value) {
             field = value
@@ -118,7 +120,7 @@ class HeadlinesRvAdapter : RecyclerView.Adapter<HeadlinesRvAdapter.HeadlineItemV
                 else -> return
             }
 
-            if (lastItemPos == lastVisibleItemPos) {
+            if (lastItemPos == lastVisibleItemPos && !isLoading) {
                 onScrollEnded?.invoke()
             }
         }

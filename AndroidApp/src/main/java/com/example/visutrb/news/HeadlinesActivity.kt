@@ -57,6 +57,7 @@ class HeadlinesActivity : AppCompatActivity(), HeadlinesView {
     }
 
     override fun onLoad() {
+        headlinesAdapter.isLoading = true
         if (headlinesPresenter.isFirstPage)  {
             headlinesSwipeRefreshLayout.isRefreshing = true
             headlinesAdapter.isLastPage = false
@@ -66,13 +67,14 @@ class HeadlinesActivity : AppCompatActivity(), HeadlinesView {
 
     override fun onResponse(response: ArticleListResponse) {
         val articles = response.articles
+        headlinesAdapter.isLoading = false
         if (headlinesPresenter.isFirstPage) {
             articles?.let { headlinesAdapter.replaceAll(it) }
             headlinesSwipeRefreshLayout.isRefreshing = false
         } else {
             articles?.let { headlinesAdapter.addAll(it) }
         }
-        Log.d(TAG, "Headlines loaded.")
+        Log.d(TAG, "Articles loaded.")
     }
 
     override fun onLastPageLoaded() {
@@ -81,6 +83,7 @@ class HeadlinesActivity : AppCompatActivity(), HeadlinesView {
     }
 
     override fun onError(e: Exception) {
+        headlinesAdapter.isLoading = false
         Toast.makeText(this, "Failed to load articles", Toast.LENGTH_SHORT).show()
         headlinesSwipeRefreshLayout.isRefreshing = false
         Log.e(TAG, "Failed to load articles.", e)
