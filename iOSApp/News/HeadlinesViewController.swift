@@ -90,7 +90,9 @@ extension HeadlinesViewController: UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let section = indexPath.section
         if section == 1 {
-            return tableView.dequeueReusableCell(withIdentifier: "Loading Progress")!
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Loading Progress") as! ProgressTableViewCell
+            cell.progress.startAnimating()
+            return cell
         } else {
             let row = indexPath.row
             var cellID: String
