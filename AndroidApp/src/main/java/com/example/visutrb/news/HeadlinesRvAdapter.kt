@@ -26,17 +26,6 @@ class HeadlinesRvAdapter : RecyclerView.Adapter<HeadlinesRvAdapter.HeadlineItemV
             notifyDataSetChanged()
         }
 
-    // var isLoadingNextPage: Boolean = false
-    //     set(value) {
-    //         field = value
-    //         if (value) {
-    //             notifyItemInserted(itemCount)
-    //             recyclerViewRef.get()?.smoothScrollToPosition(itemCount - 1)
-    //         } else {
-    //             notifyItemRemoved(itemCount)
-    //         }
-    //     }
-
     private val articleList = mutableListOf<Article>()
 
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) {
