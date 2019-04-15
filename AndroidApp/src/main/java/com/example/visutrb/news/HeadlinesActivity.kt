@@ -46,37 +46,43 @@ class HeadlinesActivity : AppCompatActivity(), HeadlinesView {
 
         headlinesSwipeRefreshLayout.apply {
             setProgressViewOffset(true, 0, statusBarOffset)
-            setOnRefreshListener { headlinesPresenter.loadHeadlineAsync(true) }
+            setOnRefreshListener { headlinesPresenter.reloadHeadlineAsync() }
         }
 
         headlinesPresenter.apply {
             view = this@HeadlinesActivity
-            loadHeadlineAsync()
+        }.also {
+            it.reloadHeadlineAsync()
         }
     }
 
     override fun onLoad() {
-        if (headlinesPresenter.currentPage == 1) headlinesSwipeRefreshLayout.isRefreshing = true
-        else headlinesAdapter.isLoadingNextPage = true
+        if (headlinesPresenter.isFirstPage)  {
+            headlinesSwipeRefreshLayout.isRefreshing = true
+            headlinesAdapter.isLastPage = false
+        }
         Log.d(TAG, "Loading articles.")
     }
 
     override fun onResponse(response: ArticleListResponse) {
         val articles = response.articles
-        if (headlinesPresenter.currentPage == 1) {
+        if (headlinesPresenter.isFirstPage) {
             articles?.let { headlinesAdapter.replaceAll(it) }
             headlinesSwipeRefreshLayout.isRefreshing = false
         } else {
             articles?.let { headlinesAdapter.addAll(it) }
-            headlinesAdapter.isLoadingNextPage = false
         }
         Log.d(TAG, "Headlines loaded.")
+    }
+
+    override fun onLastPageLoaded() {
+        headlinesAdapter.isLastPage = true
+        Log.d(TAG, "Last page loaded.")
     }
 
     override fun onError(e: Exception) {
         Toast.makeText(this, "Failed to load articles", Toast.LENGTH_SHORT).show()
         headlinesSwipeRefreshLayout.isRefreshing = false
-        headlinesAdapter.isLoadingNextPage = false
         Log.e(TAG, "Failed to load articles.", e)
     }
 

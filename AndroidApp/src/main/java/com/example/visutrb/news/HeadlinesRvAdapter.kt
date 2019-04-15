@@ -20,16 +20,22 @@ class HeadlinesRvAdapter : RecyclerView.Adapter<HeadlinesRvAdapter.HeadlineItemV
 
     var onScrollEnded: (() -> Unit)? = null
 
-    var isLoadingNextPage: Boolean = false
+    var isLastPage: Boolean = false
         set(value) {
             field = value
-            if (value) {
-                notifyItemInserted(itemCount)
-                recyclerViewRef.get()?.smoothScrollToPosition(itemCount - 1)
-            } else {
-                notifyItemRemoved(itemCount)
-            }
+            notifyDataSetChanged()
         }
+
+    // var isLoadingNextPage: Boolean = false
+    //     set(value) {
+    //         field = value
+    //         if (value) {
+    //             notifyItemInserted(itemCount)
+    //             recyclerViewRef.get()?.smoothScrollToPosition(itemCount - 1)
+    //         } else {
+    //             notifyItemRemoved(itemCount)
+    //         }
+    //     }
 
     private val articleList = mutableListOf<Article>()
 
@@ -40,22 +46,22 @@ class HeadlinesRvAdapter : RecyclerView.Adapter<HeadlinesRvAdapter.HeadlineItemV
     }
 
     override fun getItemCount(): Int {
-        return if (isLoadingNextPage) articleList.size + 1 else articleList.size
+        return if (!isLastPage && articleList.size != 0) articleList.size + 1 else articleList.size
     }
 
     override fun getItemViewType(position: Int): Int {
         return when {
-            position == 0 -> VIEW_TYPE_ENLARGED
-            position == itemCount - 1 && isLoadingNextPage -> VIEW_TYPE_PROGRESS
-            else -> VIEW_TYPE_NORMAL
+            position == 0 -> VIEW_TYPE_ENLARGED_HEADLINE
+            position == itemCount - 1 && !isLastPage -> VIEW_TYPE_PROGRESS
+            else -> VIEW_TYPE_NORMAL_HEADLINE
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HeadlineItemViewHolder {
         val inflater = LayoutInflater.from(parent.context)
         val layoutId = when (viewType) {
-            VIEW_TYPE_ENLARGED -> R.layout.item_enlarged_headline
-            VIEW_TYPE_NORMAL -> R.layout.item_normal_headline
+            VIEW_TYPE_ENLARGED_HEADLINE -> R.layout.item_enlarged_headline
+            VIEW_TYPE_NORMAL_HEADLINE -> R.layout.item_normal_headline
             VIEW_TYPE_PROGRESS -> R.layout.item_progress
             else -> throw Exception("Invalid view type")
         }
@@ -130,8 +136,8 @@ class HeadlinesRvAdapter : RecyclerView.Adapter<HeadlinesRvAdapter.HeadlineItemV
     }
 
     companion object {
-        private const val VIEW_TYPE_ENLARGED = 0
-        private const val VIEW_TYPE_NORMAL = 1
+        private const val VIEW_TYPE_ENLARGED_HEADLINE = 0
+        private const val VIEW_TYPE_NORMAL_HEADLINE = 1
         private const val VIEW_TYPE_PROGRESS = 2
     }
 }

@@ -10,27 +10,35 @@ class HeadlinesPresenter(
     private val newsApi: NewsApi
 ) : BasePresenter<HeadlinesView>(dispatcher) {
 
+    private val pageSize = 20
+
     var currentPage = 0
         private set
 
-    private var totalPages = 0
+    var totalPages = 0
+        private set
 
-    private val pageSize = 20
+    val isFirstPage: Boolean
+        get() = currentPage == 1
 
-    fun loadHeadlineAsync(reload: Boolean = false) = dispatchAsync {
-        if (reload) {
-            currentPage = 0
-            totalPages = 0
-        } else if (currentPage >= (100 / pageSize) || (currentPage >= totalPages && totalPages != 0)) {
-            return@dispatchAsync
-        }
+    val isLastPage: Boolean
+        get() = currentPage == totalPages
+
+    fun reloadHeadlineAsync() = dispatchAsync {
+        currentPage = 0
+        totalPages = 0
+        loadHeadlineAsync()
+    }
+
+    fun loadHeadlineAsync() = dispatchAsync {
+        val view = view ?: return@dispatchAsync
         currentPage++
-        view?.onLoad()
+        view.onLoad()
         val response = newsApi.getTopHeadlines(currentPage, pageSize)
         if (totalPages == 0) {
-            totalPages = response.totalResults?.div(pageSize.toDouble())
-                ?.let { ceil(it).toInt() } ?: 0
+            totalPages = response.totalResults?.let { ceil(it / pageSize.toDouble()).toInt() } ?: 0
         }
-        view?.onResponse(response)
+        view.onResponse(response)
+        if (isLastPage) view.onLastPageLoaded()
     }
 }

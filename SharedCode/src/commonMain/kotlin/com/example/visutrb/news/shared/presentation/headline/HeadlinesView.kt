@@ -6,4 +6,6 @@ import com.example.visutrb.news.shared.presentation.BaseView
 interface HeadlinesView : BaseView {
 
     fun onResponse(response: ArticleListResponse)
+
+    fun onLastPageLoaded()
 }
