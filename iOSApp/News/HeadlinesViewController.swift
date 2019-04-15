@@ -16,7 +16,11 @@ class HeadlinesViewController: UIViewController {
     
     private var refreshControl: UIRefreshControl!
     
-    private var isLoadingNextPage = false
+    private var isLastPage = false {
+        didSet { headlinesTableView.reloadData() }
+    }
+    
+    private var isLoading = false
     
     @IBOutlet private weak var headlinesTableView: UITableView!
     
@@ -31,7 +35,7 @@ class HeadlinesViewController: UIViewController {
         configureRefreshControl()
         configureViews()
         
-        headlinesPresenter.loadHeadlineAsync(reload: true)
+        headlinesPresenter.reloadHeadlineAsync()
     }
     
     private func configureStatusBar() {
@@ -41,10 +45,8 @@ class HeadlinesViewController: UIViewController {
     }
     
     private func configureRefreshControl() {
-        let statusBarFrame = UIApplication.shared.statusBarFrame
         refreshControl = UIRefreshControl()
         refreshControl.addTarget(self, action: #selector(handleRefresh), for: .valueChanged)
-        refreshControl.bounds = refreshControl.bounds.offsetBy(dx: 0, dy: 4 + statusBarFrame.height)
     }
     
     private func configureViews() {
@@ -58,17 +60,30 @@ class HeadlinesViewController: UIViewController {
     }
     
     @objc private func handleRefresh() {
-        headlinesPresenter.loadHeadlineAsync(reload: true)
+        headlinesTableView.contentInsetAdjustmentBehavior = .automatic
+        headlinesPresenter.reloadHeadlineAsync()
     }
-
+    
+    private func beginRefreshing() {
+        headlinesTableView.contentInsetAdjustmentBehavior = .automatic
+        refreshControl.beginRefreshing()
+    }
+    
+    private func endRefreshing() {
+        headlinesTableView.contentInsetAdjustmentBehavior = .never
+        refreshControl.endRefreshing()
+    }
 }
 
 extension HeadlinesViewController: UITableViewDelegate {
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let lastVisibleRow = headlinesTableView.indexPathsForVisibleRows?.last?.row
-        if lastVisibleRow == articles.count - 1 && !isLoadingNextPage {
-            headlinesPresenter.loadHeadlineAsync(reload: false)
+        let offsetY = scrollView.contentOffset.y
+        if offsetY > 0 {
+            let lastVisibleRow = headlinesTableView.indexPathsForVisibleRows?.last?.row
+            if lastVisibleRow == articles.count - 1 && !isLoading && !isLastPage {
+                headlinesPresenter.loadHeadlineAsync()
+            }
         }
     }
 }
@@ -76,7 +91,7 @@ extension HeadlinesViewController: UITableViewDelegate {
 extension HeadlinesViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return isLoadingNextPage ? 2 : 1
+        return isLastPage || articles.count == 0 ? 1 : 2
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -89,11 +104,7 @@ extension HeadlinesViewController: UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let section = indexPath.section
-        if section == 1 {
-            let cell = tableView.dequeueReusableCell(withIdentifier: "Loading Progress") as! ProgressTableViewCell
-            cell.progress.startAnimating()
-            return cell
-        } else {
+        if section == 0 {
             let row = indexPath.row
             var cellID: String
             if row == 0 {
@@ -104,6 +115,10 @@ extension HeadlinesViewController: UITableViewDataSource {
             let cell = tableView.dequeueReusableCell(withIdentifier: cellID) as! HeadlinesTableViewCell
             cell.article = articles[row]
             return cell
+        } else {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Loading Progress") as! ProgressTableViewCell
+            cell.progress.startAnimating()
+            return cell
         }
     }
 }
@@ -111,31 +126,40 @@ extension HeadlinesViewController: UITableViewDataSource {
 extension HeadlinesViewController: HeadlinesView {
     
     func onLoad() {
-        print("Loading...")
-        if headlinesPresenter.currentPage == 1 {
-            refreshControl.beginRefreshing()
-        } else {
-            isLoadingNextPage = true
-            headlinesTableView.reloadData()
+        NSLog("Loading...")
+        isLoading = true
+        if headlinesPresenter.isFirstPage {
+            isLastPage = false
+            beginRefreshing()
         }
     }
     
     func onResponse(response: ArticleListResponse) {
-        headlinesTableView.reloadData()
-        if let articles = response.articles {
-            if headlinesPresenter.currentPage == 1 {
-                refreshControl.endRefreshing()
-                self.articles = articles
-            } else {
-                isLoadingNextPage = false
-                self.articles += articles
-            }
+        NSLog("Articles loaded")
+        let articles = response.articles ?? []
+        if headlinesPresenter.isFirstPage {
+            self.articles = articles
+            endRefreshing()
+        } else {
+            self.articles += articles
         }
         headlinesTableView.reloadData()
+        isLoading = false
+    }
+    
+    func onLastPageLoaded() {
+        NSLog("Last page loaded")
+        isLastPage = true
+        isLoading = false
     }
     
     func onError(e: KotlinException) {
+        if (refreshControl.isRefreshing) {
+            endRefreshing()
+        } else if (!isLastPage) {
+            isLastPage = true
+        }
         e.printStackTrace()
-        refreshControl.endRefreshing()
+        isLoading = false
     }
 }
