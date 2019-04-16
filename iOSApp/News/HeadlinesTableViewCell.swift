@@ -34,6 +34,7 @@ class HeadlinesTableViewCell: UITableViewCell {
         let dateFormatter = DateFormatter()
         dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss'Z'"
         dateFormatter.timeZone = TimeZone(abbreviation: "UTC")
+        dateFormatter.locale = Locale(identifier: "en")
         
         let publishDate = dateFormatter.date(from: article.publishedAt!)
         

@@ -11,17 +11,20 @@ import SharedCode
 
 class HeadlinesViewController: UIViewController {
     
-    private var articles = [Article]()
-    private lazy var headlinesPresenter = { PresenterFactory().createHeadlinesPresenter() }()
+    private var enlargedRowHeight: CGFloat = -1
+    private var normalRowHeight: CGFloat = -1
+    private var progressRowHeight: CGFloat = -1
     
     private var refreshControl: UIRefreshControl!
-    
+    private var isLoading = false
     private var isLastPage = false {
         didSet { headlinesTableView.reloadData() }
     }
     
-    private var isLoading = false
+    private var articles = [Article]()
+    private lazy var headlinesPresenter = { PresenterFactory().createHeadlinesPresenter() }()
     
+    @IBOutlet private weak var topConstraint: NSLayoutConstraint!
     @IBOutlet private weak var headlinesTableView: UITableView!
     
     override var preferredStatusBarStyle: UIStatusBarStyle {
@@ -62,66 +65,78 @@ class HeadlinesViewController: UIViewController {
     @objc private func handleRefresh() {
         headlinesPresenter.reloadHeadlineAsync()
     }
-    
-    private func beginRefreshing() {
-        headlinesTableView.contentInsetAdjustmentBehavior = .automatic
-        refreshControl.beginRefreshing()
-    }
-    
-    private func endRefreshing() {
-        headlinesTableView.contentInsetAdjustmentBehavior = .never
-        refreshControl.endRefreshing()
-    }
 }
-
+    
 extension HeadlinesViewController: UITableViewDelegate {
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let offsetY = scrollView.contentOffset.y
-        if offsetY > 0 {
-            let lastVisibleRow = headlinesTableView.indexPathsForVisibleRows?.last?.row
-            if lastVisibleRow == articles.count - 1 && !isLoading && !isLastPage {
-                headlinesPresenter.loadHeadlineAsync()
-            }
+        let yOffset = scrollView.contentOffset.y
+        if yOffset < 0 {
+            topConstraint.constant = -yOffset / 2
+        } else {
+            topConstraint.constant = 0
         }
+    }
+    
+    func scrollViewDidEndDecelerating(_ scrollView: UIScrollView) {
+        let lastVisibleRow = headlinesTableView.indexPathsForVisibleRows?.last?.row
+        if lastVisibleRow == articles.count && !isLoading && !isLastPage {
+            headlinesPresenter.loadHeadlineAsync()
+        }
+    }
+    
+    func tableView(
+        _ tableView: UITableView,
+        estimatedHeightForRowAt indexPath: IndexPath) -> CGFloat
+    {
+        let row = indexPath.row
+        let rowHeight: CGFloat
+        if row == 0 {
+            rowHeight = enlargedRowHeight == -1 ? 100 : enlargedRowHeight
+        } else if row == articles.count {
+            rowHeight = progressRowHeight == -1 ? 0 : progressRowHeight
+        } else {
+            rowHeight = normalRowHeight == -1 ? 10 : normalRowHeight
+        }
+        return rowHeight
     }
 }
 
 extension HeadlinesViewController: UITableViewDataSource {
     
     func numberOfSections(in tableView: UITableView) -> Int {
-        return isLastPage || articles.count == 0 ? 1 : 2
+        return 1
     }
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        if section == 0 {
-            return articles.count
-        } else {
-            return 1
-        }
+        return !isLastPage && articles.count != 0 ? articles.count + 1 : articles.count
     }
     
     func tableView(
         _ tableView: UITableView,
         cellForRowAt indexPath: IndexPath) -> UITableViewCell
     {
-        let section = indexPath.section
-        if section == 0 {
-            let row = indexPath.row
-            var cellID: String
-            if row == 0 {
-                cellID = "Enlarged Headline"
-            } else {
-                cellID = "Normal Headline"
+        let row = indexPath.row
+        if !isLastPage && row == articles.count {
+            let cell = tableView.dequeueReusableCell(withIdentifier: "Loading Progress")
+                as! ProgressTableViewCell
+            cell.progress.startAnimating()
+            if progressRowHeight == -1 {
+                progressRowHeight = cell.frame.height
             }
-            let cell = tableView.dequeueReusableCell(
-                withIdentifier: cellID) as! HeadlinesTableViewCell
-            cell.article = articles[row]
             return cell
         } else {
-            let cell = tableView.dequeueReusableCell(
-                withIdentifier: "Loading Progress") as! ProgressTableViewCell
-            cell.progress.startAnimating()
+            let cellId = row == 0 ? "Enlarged Headline" : "Normal Headline"
+            let cell = tableView.dequeueReusableCell(withIdentifier: cellId)
+                as! HeadlinesTableViewCell
+            cell.article = articles[row]
+            
+            if row == 0 && enlargedRowHeight == -1 {
+                enlargedRowHeight = cell.frame.height
+            } else if row != 0 && normalRowHeight == -1 {
+                normalRowHeight = cell.frame.height
+            }
+            
             return cell
         }
     }
@@ -130,21 +145,27 @@ extension HeadlinesViewController: UITableViewDataSource {
 extension HeadlinesViewController: HeadlinesView {
     
     func onLoad() {
-        NSLog("Loading...")
+        NSLog("Loading headlines...")
         isLoading = true
         if headlinesPresenter.isFirstPage {
             isLastPage = false
-            beginRefreshing()
+            refreshControl.beginRefreshing()
         }
     }
     
     func onResponse(response: ArticleListResponse) {
-        NSLog("Articles loaded")
+        NSLog("Headlines loaded.")
         let articles = response.articles ?? []
         if headlinesPresenter.isFirstPage {
             self.articles = articles
-            endRefreshing()
+            refreshControl.endRefreshing()
         } else {
+            let insertPosition = articles.count
+            var insertIndexPaths = [IndexPath]()
+            for index in 0..<articles.count {
+                let indexPath = IndexPath(row: insertPosition + index, section: 0)
+                insertIndexPaths.append(indexPath)
+            }
             self.articles += articles
         }
         headlinesTableView.reloadData()
@@ -152,14 +173,14 @@ extension HeadlinesViewController: HeadlinesView {
     }
     
     func onLastPageLoaded() {
-        NSLog("Last page loaded")
+        NSLog("Loaded last page.")
         isLastPage = true
         isLoading = false
     }
     
     func onError(e: KotlinException) {
         if (refreshControl.isRefreshing) {
-            endRefreshing()
+            refreshControl.endRefreshing()
         } else if (!isLastPage) {
             isLastPage = true
         }

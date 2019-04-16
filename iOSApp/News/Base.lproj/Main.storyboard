@@ -241,6 +241,7 @@
                     </view>
                     <connections>
                         <outlet property="headlinesTableView" destination="t6V-RY-D8P" id="tf1-ZU-ays"/>
+                        <outlet property="topConstraint" destination="imn-vS-3WN" id="RZp-KO-Ebo"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="dkx-z0-nzr" sceneMemberID="firstResponder"/>
